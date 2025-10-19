@@ -1,0 +1,1 @@
+# Test Python project for CodeGraph indexing

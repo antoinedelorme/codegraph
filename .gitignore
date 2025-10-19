@@ -1,0 +1,28 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# CodeGraph specific
+*.codegraph.db
+*.codegraph.db-*
+.codegraph/
+
+# Testing
+/test-data/
+/tmp/
+
+# Benchmarks
+/benches/results/

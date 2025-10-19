@@ -1,0 +1,57 @@
+# CodeGraph Configuration Example
+# Copy to .codegraph.toml and customize
+
+[project]
+name = "my-project"
+root = "."
+
+[languages]
+# Which languages to index
+enabled = ["intent", "rust", "typescript"]
+
+[indexing]
+# Exclude patterns (gitignore syntax)
+exclude = [
+  "target/",
+  "node_modules/",
+  "*.test.*",
+  "**/__tests__/**"
+]
+
+# Include only specific directories
+include = ["src/", "lib/"]
+
+# Watch for changes
+watch = true
+
+# Indexing batch size
+batch_size = 100
+
+[query]
+# Query timeout (ms)
+timeout = 5000
+
+# Max query depth (for recursive queries)
+max_depth = 10
+
+# Cache size (number of queries)
+cache_size = 1000
+
+[performance]
+# Number of indexing threads
+threads = 4
+
+# Memory limit (MB)
+memory_limit = 500
+
+# Enable query profiling
+profile_queries = false
+
+[logging]
+level = "info"  # debug, info, warn, error
+format = "json"  # json or pretty
+
+[mcp]
+# MCP server configuration
+transport = "stdio"  # stdio or http
+port = 3000  # Only used for HTTP transport

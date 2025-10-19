@@ -1,0 +1,39 @@
+# Test CodeGraph Configuration
+
+[project]
+name = "test-project"
+root = "."
+
+[languages]
+enabled = ["python", "rust", "go", "java", "intent"]
+
+[indexing]
+exclude = [
+  "target/",
+  "node_modules/",
+  "*.test.*",
+  "**/__tests__/**",
+  ".git/",
+  ".codegraph.db"
+]
+include = []
+watch = false
+batch_size = 50
+
+[query]
+timeout = 3000
+max_depth = 5
+cache_size = 500
+
+[performance]
+threads = 2
+memory_limit = 256
+profile_queries = true
+
+[logging]
+level = "debug"
+format = "pretty"
+
+[mcp]
+transport = "stdio"
+port = 4000

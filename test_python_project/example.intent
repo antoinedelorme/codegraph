@@ -1,0 +1,56 @@
+/// Example Intent context for testing
+context UserSession persist "file://auto" {
+  user_id: String
+  login_time: String
+  preferences: Map<String, String>
+
+  fn login(user: String) -> Bool {
+    user_id = user
+    login_time = "now"
+    return true
+  }
+
+  fn set_preference(key: String, value: String) {
+    preferences[key] = value
+  }
+
+  fn get_preference(key: String) -> Maybe<String> {
+    return preferences[key]
+  }
+
+  on start {
+    println("User session started for {user_id}")
+  }
+}
+
+/// Database connection context
+context Database depends [UserSession] {
+  connection_string: String = "postgresql://localhost"
+  pool_size: Int = 10
+
+  fn connect() -> Bool {
+    // Connect to database
+    return true
+  }
+
+  fn query(sql: String) -> List<Map<String, String>> {
+    // Execute query
+    return []
+  }
+}
+
+/// Main application context
+context App extends UserSession {
+  version: String = "1.0.0"
+  debug: Bool = false
+
+  fn initialize() {
+    login("admin")
+    set_preference("theme", "dark")
+  }
+
+  fn run() {
+    initialize()
+    println("App running v{version}")
+  }
+}
