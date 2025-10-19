@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
-use tokio::sync::mpsc;
+use parking_lot::Mutex;
 use tracing::{debug, error, info, warn};
 
 use crate::indexer::Indexer;
@@ -36,26 +36,24 @@ impl FileWatcher {
     }
 
     /// Start watching for file changes
-    pub async fn watch(&self) -> Result<()> {
+    pub async fn watch(self) -> Result<()> {
         info!("Starting file watcher for: {}", self.watch_path.display());
 
-        // Create a channel for file events
-        let (tx, mut rx) = mpsc::channel(100);
+        // Create a standard sync channel for file events (notify runs in its own thread)
+        let (tx, rx) = std::sync::mpsc::channel();
+        let rx = Arc::new(Mutex::new(rx));
 
-        // Create the file watcher
+        // Create the file watcher with a sync callback
         let mut watcher = RecommendedWatcher::new(
             move |res: Result<Event, notify::Error>| {
-                let tx = tx.clone();
-                tokio::spawn(async move {
-                    match res {
-                        Ok(event) => {
-                            if let Err(e) = tx.send(event).await {
-                                error!("Failed to send file event: {}", e);
-                            }
+                match res {
+                    Ok(event) => {
+                        if let Err(e) = tx.send(event) {
+                            error!("Failed to send file event: {}", e);
                         }
-                        Err(e) => error!("File watch error: {}", e),
                     }
-                });
+                    Err(e) => error!("File watch error: {}", e),
+                }
             },
             Config::default(),
         )?;
@@ -65,10 +63,31 @@ impl FileWatcher {
 
         info!("File watcher started. Monitoring for changes...");
 
-        // Process file events
-        while let Some(event) = rx.recv().await {
-            self.handle_event(event).await?;
+        // Process file events in async context
+        // Keep watcher alive by moving it into the loop
+        loop {
+            // Use blocking recv in spawn_blocking to avoid blocking the async runtime
+            let event = match tokio::task::spawn_blocking({
+                let rx = Arc::clone(&rx);
+                move || rx.lock().recv()
+            })
+            .await
+            {
+                Ok(Ok(event)) => event,
+                Ok(Err(_)) => break, // Channel closed
+                Err(e) => {
+                    error!("Spawn blocking error: {}", e);
+                    break;
+                }
+            };
+
+            if let Err(e) = self.handle_event(event).await {
+                error!("Error handling event: {}", e);
+            }
         }
+
+        // Keep watcher alive until loop exits
+        drop(watcher);
 
         Ok(())
     }

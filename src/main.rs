@@ -17,7 +17,11 @@ mod query;
 #[command(about = "Real-time semantic code index for AI agents via MCP", long_about = None)]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
+
+    /// Project directory (shorthand for 'codegraph start <project>')
+    #[arg(value_name = "PROJECT")]
+    project: Option<String>,
 
     /// Enable debug logging
     #[arg(short, long, global = true)]
@@ -30,7 +34,26 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Start MCP server
+    /// Start MCP server (auto-index + watch) - default command
+    Start {
+        /// Project directory to index
+        #[arg(default_value = ".")]
+        project: String,
+
+        /// Port for HTTP server (optional, uses stdio by default)
+        #[arg(short = 'P', long)]
+        port: Option<u16>,
+
+        /// Disable file watching
+        #[arg(long)]
+        no_watch: bool,
+
+        /// Force rebuild index
+        #[arg(short, long)]
+        rebuild: bool,
+    },
+
+    /// Start MCP server (manual mode - no auto-indexing)
     Serve {
         /// Project directory to index
         #[arg(short, long, default_value = ".")]
@@ -132,7 +155,38 @@ async fn main() -> Result<()> {
 
     info!("CodeGraph v0.1.0 starting...");
 
-    match cli.command {
+    // Handle shorthand: codegraph <project>
+    let command = if let Some(cmd) = cli.command {
+        cmd
+    } else if let Some(project) = cli.project {
+        // No subcommand provided, use shorthand Start
+        Commands::Start {
+            project,
+            port: None,
+            no_watch: false,
+            rebuild: false,
+        }
+    } else {
+        // No subcommand and no project path - use current directory
+        Commands::Start {
+            project: ".".to_string(),
+            port: None,
+            no_watch: false,
+            rebuild: false,
+        }
+    };
+
+    match command {
+        Commands::Start {
+            project,
+            port,
+            no_watch,
+            rebuild,
+        } => {
+            info!("Starting CodeGraph for project: {}", project);
+            cli::start::start_server(project, port, !no_watch, rebuild).await?;
+        }
+
         Commands::Serve { project, port } => {
             info!("Starting MCP server for project: {}", project);
             if let Some(port) = port {

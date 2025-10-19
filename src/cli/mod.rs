@@ -1,5 +1,6 @@
 // CLI command implementations
 
+pub mod start;
 pub mod serve;
 pub mod index;
 pub mod query;

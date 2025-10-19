@@ -8,7 +8,7 @@
 
 ---
 
-## 🚀 Quick Start (5 minutes)
+## 🚀 Quick Start (2 minutes)
 
 ```bash
 # 1. Install Rust (skip if already installed)
@@ -20,14 +20,11 @@ git clone https://github.com/antoinedelorme/codegraph
 cd codegraph
 cargo build --release
 
-# 3. Index your project (takes 10-60 seconds)
-./target/release/codegraph index --project /path/to/your/project
-
-# 4. Start MCP server for AI integration
-./target/release/codegraph serve --project /path/to/your/project
+# 3. Start CodeGraph (auto-indexes + serves + watches)
+./target/release/codegraph /path/to/your/project
 ```
 
-**That's it!** Your AI assistant now has instant access to your codebase structure. 🎉
+**That's it!** Your AI assistant now has instant, real-time access to your codebase structure. 🎉
 
 ---
 
@@ -117,44 +114,48 @@ cargo install --path .
 
 ## 🎯 Usage
 
-### 1. Index Your Project
+### Simple Mode (Recommended)
 
-First, index your codebase to build the semantic understanding:
+Start CodeGraph with a single command - it auto-indexes, serves via MCP, and watches for changes:
 
+```bash
+# Start in current directory
+./target/release/codegraph .
+
+# Start for a specific project
+./target/release/codegraph /path/to/your/project
+
+# Or use the explicit command
+./target/release/codegraph start /path/to/your/project
+```
+
+**What happens automatically:**
+- Indexes all supported files (Python, Rust, Go, Java, Intent)
+- Starts MCP server (stdio transport for Claude Desktop)
+- Watches for file changes and re-indexes automatically
+- Ready for AI queries immediately
+
+### Advanced Options
+
+**Manual indexing (without serving):**
 ```bash
 # Index current directory
 ./target/release/codegraph index
 
-# Index a specific project
-./target/release/codegraph index --project /path/to/your/project
-
-# Watch for changes (continuous indexing)
-./target/release/codegraph index --watch
-
 # Rebuild index from scratch
 ./target/release/codegraph index --rebuild
+
+# Index without watching
+./target/release/codegraph index --no-watch
 ```
 
-**What gets indexed:**
-- Functions, classes, methods, variables
-- Call relationships between symbols
-- File dependencies and imports
-- Language-specific semantic structures
-
-### 2. Start MCP Server for AI Integration
-
+**Serve without auto-indexing:**
 ```bash
-# Start stdio server (recommended for Claude Desktop)
+# Use existing index (no auto-indexing)
 ./target/release/codegraph serve --project /path/to/your/project
-
-# Start HTTP server (for custom integrations)
-./target/release/codegraph serve --project /path/to/your/project --port 3000
 ```
 
-### 3. Query the Index (Optional CLI)
-
-You can also query directly from command line:
-
+**Query from command line:**
 ```bash
 # Find all places that call a function
 ./target/release/codegraph query callers "authenticate_user"
@@ -169,17 +170,13 @@ You can also query directly from command line:
 ./target/release/codegraph stats --verbose
 ```
 
-### 4. Analyze Impact of Changes
-
+**Analyze impact of changes:**
 ```bash
 # What breaks if I rename this function?
 ./target/release/codegraph impact rename "old_function_name" --to "new_function_name"
 
 # What breaks if I delete this class?
 ./target/release/codegraph impact delete "DeprecatedClass"
-
-# What breaks if I change a type?
-./target/release/codegraph impact change_type "variable" --to "NewType"
 ```
 
 ---
@@ -208,7 +205,7 @@ CodeGraph integrates with Claude Desktop via the Model Context Protocol (MCP).
      "mcpServers": {
        "codegraph": {
          "command": "/full/path/to/codegraph/target/release/codegraph",
-         "args": ["serve", "--project", "/path/to/your/project"]
+         "args": ["/path/to/your/project"]
        }
      }
    }
@@ -270,7 +267,7 @@ Edit `~/.config/claude/claude_desktop_config.json`:
   "mcpServers": {
     "codegraph": {
       "command": "/usr/local/bin/codegraph",
-      "args": ["serve", "--project", "/path/to/your/project"]
+      "args": ["/path/to/your/project"]
     }
   }
 }
@@ -454,14 +451,13 @@ Built with ❤️ using:
 **CodeGraph makes AI code navigation 100x faster.** Give your AI assistant instant access to your codebase structure!
 
 ```bash
-# Install
+# Install (or build from source)
 cargo install --git https://github.com/antoinedelorme/codegraph
 
-# Index your project
-codegraph index --project /path/to/your/code
-
-# Start MCP server
-codegraph serve --project /path/to/your/code
+# Start CodeGraph - that's it!
+codegraph /path/to/your/code
 ```
 
 Then ask your AI assistant: *"Show me the call graph for user authentication"* ✨
+
+**Pro tip:** Use `codegraph .` to start in your current directory!
